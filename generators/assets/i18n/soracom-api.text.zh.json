@@ -587,6 +587,9 @@
           "speed_class_filter": {
             "description": "设为检索对象的速度级别。用`|`隔开可以进行多个指定。可以指定的值如下：`s1.minimum`, `s1.slow`, `s1.standard`, `s1.fast`"
           },
+          "serial_number_filter": {
+            "description": "Serial number for filtering the search. Can specify multiple values delimited by `|`. Returns subscribers with serial number starting with the specified value(s)."
+          },
           "limit": {
             "description": "能获得的Subscriber的上限"
           },
@@ -1043,7 +1046,7 @@
     "get_data_from_subscriber": {
       "get": {
         "summary": "Get data sent from a subscriber.",
-        "description": "Returns a list of data entries sent from a subscriber that match a certain criteria. If the total number of entries does not fit in one page, a URL for accessing the next page is returned in the 'Link' header of the response.",
+        "description": "Returns a list of data entries sent from a subscriber that match certain criteria. If the total number of entries does not fit in one page, a URL for accessing the next page is returned in the 'Link' header of the response.",
         "parameters": {
           "imsi": {
             "description": "IMSI of the target subscriber that generated data entries."
@@ -1076,6 +1079,633 @@
       "description": "Manage subscribers."
     }
   },
+  "lora_devices": {
+    "list_lora_devices": {
+      "get": {
+        "summary": "List LoRa devices",
+        "description": "返回符合条件的LoRa device的列表。如果LoRa device的总数超过1页，则在应答中，将联结到下一页的URL包含在`Link`头文件中返回。",
+        "parameters": {
+          "tag_name": {
+            "description": "设定为检索对象的标签名（完全相同）。"
+          },
+          "tag_value": {
+            "description": "设定为检索对象的标签检索文字列。指定为`tag_name`的情况则为必须。"
+          },
+          "tag_value_match_mode": {
+            "description": "标签的检索条件。"
+          },
+          "limit": {
+            "description": "能获得的LoRa device的上限"
+          },
+          "last_evaluated_key": {
+            "description": "本页获得的最后的LoRa device的Device ID。通过指定该参数，可以获得下一个LoRa device之后的列表。"
+          }
+        },
+        "responses": {
+          "status200": {
+            "description": "A list of subscibers"
+          }
+        }
+      }
+    },
+    "register_lora_device": {
+      "post": {
+        "summary": "Register LoRa device",
+        "description": "登录LoRa device",
+        "parameters": {
+          "device_id": {
+            "description": "对象的LoRa device的ID"
+          },
+          "lora_device": {
+            "description": "LoRa device"
+          }
+        },
+        "responses": {
+          "status201": {
+            "description": "LoRa device登录完毕"
+          }
+        }
+      }
+    },
+    "get_lora_device": {
+      "get": {
+        "summary": "Get LoRa device",
+        "description": "返回指定的LoRa device的信息。",
+        "parameters": {
+          "device_id": {
+            "description": "对象的LoRa device的ID"
+          }
+        },
+        "responses": {
+          "status200": {
+            "description": "指定的LoRa device的详细信息"
+          },
+          "status404": {
+            "description": "指定的LoRa device不存在"
+          }
+        }
+      }
+    },
+    "get_data_from_lora_device": {
+      "get": {
+        "summary": "Get data sent from a LoRa device.",
+        "description": "Returns a list of data entries sent from a LoRa device that match certain criteria. If the total number of entries does not fit in one page, a URL for accessing the next page is returned in the 'Link' header of the response.",
+        "parameters": {
+          "device_id": {
+            "description": "ID of the target subscriber that generated data entries."
+          },
+          "from": {
+            "description": "Start time for the data entries search range (unixtime in milliseconds)."
+          },
+          "to": {
+            "description": "End time for the data entries search range (unixtime in milliseconds)."
+          },
+          "sort": {
+            "description": "Sort order of the data entries. Either descending (latest data entry first) or ascending (oldest data entry first). Default "
+          },
+          "limit": {
+            "description": "Maximum number of data entries to retrieve."
+          },
+          "last_evaluated_key": {
+            "description": "The value of `time` in the last log entry retrieved in the previous page. By specifying this parameter, you can continue to retrieve the list from the next page onward."
+          }
+        },
+        "responses": {
+          "status200": {
+            "description": "A list of data entries."
+          }
+        }
+      }
+    },
+    "send_data_to_lora_device": {
+      "post": {
+        "summary": "Send data to a LoRa device.",
+        "description": "Sends data to the specified LoRa device. The data is sent to the LoRa network server, to be sent out to the device using the next available slot. If another message destined for the same LoRa device ID is already waiting to be sent, the existing message will be discarded, and the new message will be sent instead.",
+        "parameters": {
+          "device_id": {
+            "description": "ID of the recipient device."
+          },
+          "data": {
+            "description": "Binary data encoded as a hexadecimal string. Maximum length of original binary data is 11 octets (22 characters when encoded as a hexadecimal string)."
+          }
+        },
+        "responses": {
+          "status204": {
+            "description": "Data has been received and sent to the LoRa network server for the recipient device to retrieve."
+          },
+          "status404": {
+            "description": "No such device found."
+          }
+        }
+      }
+    },
+    "terminate_lora_device": {
+      "post": {
+        "summary": "Terminate LoRa device",
+        "description": "将指定的LoRa device进行Terminate",
+        "parameters": {
+          "device_id": {
+            "description": "对象的LoRa device的ID"
+          }
+        },
+        "responses": {
+          "status200": {
+            "description": "更新后的LoRa device的详细信息"
+          },
+          "status404": {
+            "description": "指定的LoRa device不存在"
+          }
+        }
+      }
+    },
+    "enable_termination": {
+      "post": {
+        "summary": "Enable Termination of LoRa device",
+        "description": "将指定的LoRa device设定为可以Terminate",
+        "parameters": {
+          "device_id": {
+            "description": "对象的LoRa device的ID"
+          }
+        },
+        "responses": {
+          "status200": {
+            "description": "更新后的LoRa device的详细信息"
+          },
+          "status404": {
+            "description": "指定的LoRa device不存在"
+          }
+        }
+      }
+    },
+    "disable_termination": {
+      "post": {
+        "summary": "Disable Termination of LoRa device",
+        "description": "将指定的LoRa device设定为不可Terminate",
+        "parameters": {
+          "device_id": {
+            "description": "对象的LoRa device的ID"
+          }
+        },
+        "responses": {
+          "status200": {
+            "description": "更新后的LoRa device的详细信息"
+          },
+          "status404": {
+            "description": "指定的LoRa device不存在"
+          }
+        }
+      }
+    },
+    "set_group": {
+      "post": {
+        "summary": "Set Group of LoRa device",
+        "description": "将指定的LoRa device的所属Group进行指定或替换更改",
+        "parameters": {
+          "device_id": {
+            "description": "对象的LoRa device的ID"
+          },
+          "group": {
+            "description": "Group（只需含有ID即可）"
+          }
+        },
+        "responses": {
+          "status200": {
+            "description": "更新后的LoRa device的详细信息"
+          },
+          "status404": {
+            "description": "指定的LoRa device不存在"
+          }
+        }
+      }
+    },
+    "unset_group": {
+      "post": {
+        "summary": "Unset Group of LoRa device",
+        "description": "将指定的LoRa device的Group指定解除",
+        "parameters": {
+          "device_id": {
+            "description": "对象的LoRa device的ID"
+          }
+        },
+        "responses": {
+          "status200": {
+            "description": "更新后的LoRa device的详细信息"
+          },
+          "status404": {
+            "description": "指定的LoRa device不存在，或LoRa device不属于Group"
+          }
+        }
+      }
+    },
+    "put_lora_device_tags": {
+      "put": {
+        "summary": "Bulk Insert or Update LoRa device Tags",
+        "description": "追加、更新指定的LoRa device的标签",
+        "parameters": {
+          "device_id": {
+            "description": "对象的LoRa device的ID"
+          },
+          "tags": {
+            "description": "追加、更新对象标签的排列"
+          }
+        },
+        "responses": {
+          "status200": {
+            "description": "更新后的LoRa device的详细信息"
+          },
+          "status404": {
+            "description": "指定的LoRa device不存在"
+          }
+        }
+      }
+    },
+    "delete_lora_device_tag": {
+      "delete": {
+        "summary": "Delete LoRa device Tag",
+        "description": "删除指定的LoRa device的标签",
+        "parameters": {
+          "device_id": {
+            "description": "对象的LoRa device的ID"
+          },
+          "tag_name": {
+            "description": "删除对象的标签名（由于是URL的Path的一部分，所以进行百分号编码。如果是JavaScript的话则指定encodeURIComponent()过的项目）"
+          }
+        },
+        "responses": {
+          "status204": {
+            "description": "对象标签删除完毕"
+          },
+          "status404": {
+            "description": "指定的LoRa device或者标签不存在"
+          }
+        }
+      }
+    },
+    "cli": {
+      "summary": "Manage LoRa devices.",
+      "description": "Manage LoRa devices."
+    }
+  },
+  "lora_gateways": {
+    "list": {
+      "summary": "List LoRa Gateways.",
+      "description": "Returns a list of LoRa gateways that match certain criteria. If the total number of LoRa gateways does not fit in one page, a URL for accessing the next page is returned in the 'Link' header of the response.",
+      "parameters": {
+        "tag_name": {
+          "description": "Tag name for filtering the search (exact match)."
+        },
+        "tag_value": {
+          "description": "Tag search string for filtering the search. Required when `tag_name` has been specified."
+        },
+        "tag_value_match_mode": {
+          "description": "Tag match mode."
+        },
+        "limit": {
+          "description": "Maximum number of LoRa devices to retrieve."
+        },
+        "last_evaluated_key": {
+          "description": "The device ID of the last device retrieved on the current page. By specifying this parameter, you can continue to retrieve the list from the next device onward."
+        }
+      },
+      "responses": {
+        "status200": {
+          "description": "A list of LoRa gateways."
+        }
+      }
+    },
+    "get": {
+      "summary": "Get LoRa gateway.",
+      "description": "Returns information about the specified LoRa gateway.",
+      "parameters": {
+        "gateway_id": {
+          "description": "Gateway ID of the target LoRa gateway."
+        }
+      },
+      "responses": {
+        "status200": {
+          "description": "The LoRa gateway's detailed information."
+        },
+        "status404": {
+          "description": "The specified LoRa gateway does not exist."
+        }
+      }
+    },
+    "terminate": {
+      "summary": "Terminate LoRa gateway.",
+      "description": "Terminates the specified LoRa gateway",
+      "parameters": {
+        "gateway_id": {
+          "description": "Device ID of the target LoRa gateway."
+        }
+      },
+      "responses": {
+        "status200": {
+          "description": "The LoRa gateway's detailed information after the update."
+        },
+        "status404": {
+          "description": "The specified LoRa gateway does not exist."
+        }
+      }
+    },
+    "enable_termination": {
+      "summary": "Enable Termination of LoRa gateway.",
+      "description": "Enables termination of specified LoRa gateway.",
+      "parameters": {
+        "gateway_id": {
+          "description": "ID of the target LoRa gateway."
+        }
+      },
+      "responses": {
+        "status200": {
+          "description": "The LoRa gateway's detailed information after the update."
+        },
+        "status404": {
+          "description": "The specified LoRa gateway does not exist."
+        }
+      }
+    },
+    "disable_termination": {
+      "summary": "Disable Termination of LoRa gateway.",
+      "description": "Disables termination of specified LoRa gateway.",
+      "parameters": {
+        "gateway_id": {
+          "description": "ID of the target LoRa gateway."
+        }
+      },
+      "responses": {
+        "status200": {
+          "description": "The LoRa gateway's detailed information after the update."
+        },
+        "status404": {
+          "description": "The specified LoRa gateway does not exist."
+        }
+      }
+    },
+    "set_network_set": {
+      "summary": "Set Network Set ID of LoRa gateway.",
+      "description": "Sets or overwrites network set ID for the specified LoRa gateway.",
+      "parameters": {
+        "gateway_id": {
+          "description": "ID of the target LoRa gateway."
+        },
+        "ns_id": {
+          "description": "LoRa Network Set ID."
+        }
+      },
+      "responses": {
+        "status200": {
+          "description": "The LoRa gateway's detailed information after the update."
+        },
+        "status404": {
+          "description": "The specified LoRa device does not exist."
+        }
+      }
+    },
+    "unset_network_set": {
+      "summary": "Unset Network Set ID of LoRa gateway.",
+      "description": "Unset network set ID of the specified LoRa gateway.",
+      "parameters": {
+        "gateway_id": {
+          "description": "ID of the target LoRa gateway."
+        }
+      },
+      "responses": {
+        "status200": {
+          "description": "The LoRa gateway's detailed information after the update."
+        },
+        "status404": {
+          "description": "The specified LoRa gateway does not exist."
+        }
+      }
+    },
+    "put_tags": {
+      "summary": "Bulk Insert or Update LoRa gateway Tags.",
+      "description": "Inserts/updates tags for the specified LoRa gateway.",
+      "parameters": {
+        "gateway_id": {
+          "description": "ID of the target LoRa gateway."
+        },
+        "tags": {
+          "description": "Array of tags to be inserted/updated."
+        }
+      },
+      "responses": {
+        "status200": {
+          "description": "The LoRa gateway's detailed information after the update."
+        },
+        "status404": {
+          "description": "The specified LoRa gateway does not exist."
+        }
+      }
+    },
+    "delete_tag": {
+      "summary": "Delete LoRa gateway tag.",
+      "description": "Deletes a tag from the specified LoRa gateway.",
+      "parameters": {
+        "gateway_id": {
+          "description": "ID of the target LoRa gateway."
+        },
+        "tag_name": {
+          "description": "Name of tag to be deleted. (This will be part of a URL path, so it needs to be percent-encoded. In JavaScript, specify the name after it has been encoded using encodeURIComponent().)"
+        }
+      },
+      "responses": {
+        "status204": {
+          "description": "Deletion of specified tag complete."
+        },
+        "status404": {
+          "description": "The specified LoRa gateway or the tag does not exist."
+        }
+      }
+    },
+    "cli": {
+      "summary": "Manage LoRa gateways.",
+      "description": "Manage LoRa gateways."
+    }
+  },
+  "lora_network_sets": {
+    "create": {
+      "summary": "Create a LoRa network set.",
+      "description": "Creates a specified LoRa network set",
+      "parameters": {
+        "lora_network_set": {
+          "description": "Additional metadata such as tags for a LoRa network set to create."
+        }
+      },
+      "responses": {
+        "status201": {
+          "description": "A LoRa network set was created."
+        }
+      }
+    },
+    "list": {
+      "summary": "List LoRa Network Sets.",
+      "description": "Returns a list of LoRa network sets that match certain criteria. If the total number of LoRa network sets does not fit in one page, a URL for accessing the next page is returned in the 'Link' header of the response.",
+      "parameters": {
+        "tag_name": {
+          "description": "Tag name for filtering the search (exact match)."
+        },
+        "tag_value": {
+          "description": "Tag search string for filtering the search. Required when `tag_name` has been specified."
+        },
+        "tag_value_match_mode": {
+          "description": "Tag match mode."
+        },
+        "limit": {
+          "description": "Maximum number of LoRa devices to retrieve."
+        },
+        "last_evaluated_key": {
+          "description": "The ID of the last network set retrieved on the current page. By specifying this parameter, you can continue to retrieve the list from the next device onward."
+        }
+      },
+      "responses": {
+        "status200": {
+          "description": "A list of LoRa network sets."
+        }
+      }
+    },
+    "get": {
+      "summary": "Get LoRa network set.",
+      "description": "Returns information about the specified LoRa network set.",
+      "parameters": {
+        "ns_id": {
+          "description": "ID of the target LoRa network set."
+        }
+      },
+      "responses": {
+        "status200": {
+          "description": "The LoRa network set's detailed information."
+        },
+        "status404": {
+          "description": "The specified LoRa network set does not exist."
+        }
+      }
+    },
+    "list_gateways": {
+      "summary": "List LoRa Gateways in a Network Set.",
+      "description": "Returns a list of LoRa gateways that belong to the specified network set. If the total number of LoRa gateways does not fit in one page, a URL for accessing the next page is returned in the 'Link' header of the response.",
+      "parameters": {
+        "ns_id": {
+          "description": "ID of the target LoRa network set."
+        },
+        "limit": {
+          "description": "Maximum number of LoRa gateways to retrieve."
+        },
+        "last_evaluated_key": {
+          "description": "The ID of the last gateway retrieved on the current page. By specifying this parameter, you can continue to retrieve the list from the next device onward."
+        }
+      },
+      "responses": {
+        "status200": {
+          "description": "A list of LoRa gateways."
+        },
+        "status404": {
+          "description": "The specified network set does not exist."
+        }
+      }
+    },
+    "delete": {
+      "summary": "Delete LoRa network set.",
+      "description": "Deletes the specified LoRa network set",
+      "parameters": {
+        "ns_id": {
+          "description": "ID of the target LoRa network set."
+        }
+      },
+      "responses": {
+        "status204": {
+          "description": "Successfully deleted."
+        },
+        "status404": {
+          "description": "The specified LoRa network set does not exist."
+        }
+      }
+    },
+    "add_permission": {
+      "summary": "Adds permission to a LoRa network set.",
+      "description": "Adds permission to allow another operator to use the network set.",
+      "parameters": {
+        "ns_id": {
+          "description": "ID of the target LoRa network set."
+        },
+        "operator_id": {
+          "description": "ID of the operator to be added to the list of allowed operators."
+        }
+      },
+      "responses": {
+        "status200": {
+          "description": "Permission added to the network set."
+        },
+        "status404": {
+          "description": "The specified LoRa network set does not exist."
+        }
+      }
+    },
+    "revoke_permission": {
+      "summary": "Revokes a permission from a LoRa network set.",
+      "description": "Revokes a permission and removes an operator from the list of allowed operators in the network set.",
+      "parameters": {
+        "ns_id": {
+          "description": "ID of the target LoRa network set."
+        },
+        "operator_id": {
+          "description": "ID of the operator to be removed from the list of allowed operators."
+        }
+      },
+      "responses": {
+        "status200": {
+          "description": "Permission revoked from the network set."
+        },
+        "status404": {
+          "description": "The specified LoRa network set does not exist."
+        }
+      }
+    },
+    "put_tags": {
+      "summary": "Bulk Insert or Update LoRa network set tags.",
+      "description": "Inserts/updates tags for the specified LoRa network set.",
+      "parameters": {
+        "ns_id": {
+          "description": "ID of the target LoRa network set."
+        },
+        "tags": {
+          "description": "Array of tags to be inserted/updated."
+        }
+      },
+      "responses": {
+        "status200": {
+          "description": "The LoRa network set's detailed information after the update."
+        },
+        "status404": {
+          "description": "The specified LoRa network set does not exist."
+        }
+      }
+    },
+    "delete_tag": {
+      "summary": "Delete LoRa network set tag.",
+      "description": "Deletes a tag from the specified LoRa network set.",
+      "parameters": {
+        "ns_id": {
+          "description": "ID of the target LoRa network set."
+        },
+        "tag_name": {
+          "description": "Name of tag to be deleted. (This will be part of a URL path, so it needs to be percent-encoded. In JavaScript, specify the name after it has been encoded using encodeURIComponent().)"
+        }
+      },
+      "responses": {
+        "status204": {
+          "description": "Deletion of specified tag complete."
+        },
+        "status404": {
+          "description": "The specified LoRa network set or the tag does not exist."
+        }
+      }
+    },
+    "cli": {
+      "summary": "Manage LoRa network sets.",
+      "description": "Manage LoRa network sets."
+    }
+  },  
   "bills": {
     "get_billing_history": {
       "get": {
@@ -1404,6 +2034,18 @@
     "cli": {
       "summary": "List, create, update or delete event handlers.",
       "description": "List, create, update or delete event handlers."
+    }
+  },
+  "files":{
+    "get_exported": {
+      "get": {
+        "summary": "Get an exported file.",
+        "description": "Get an exported file. The `url` field in the response will contain a URL to download the exported file."
+      }
+    },
+    "cli": {
+      "summary": "Get an exported file.",
+      "description": "Get an exported file."
     }
   },
   "orders": {
@@ -2150,7 +2792,7 @@
     "get_logs": {
       "get": {
         "summary": "Get Logs.",
-        "description": "Returns a list of log entries that match a certain criteria. If the total number of entries does not fit in one page, a URL for accessing the next page is returned in the 'Link' header of the response.",
+        "description": "Returns a list of log entries that match certain criteria. If the total number of entries does not fit in one page, a URL for accessing the next page is returned in the 'Link' header of the response.",
         "parameters": {
           "resource_type": {
             "description": "Type of the target resource to query log entries."
