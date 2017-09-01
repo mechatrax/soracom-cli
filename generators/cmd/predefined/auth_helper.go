@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -23,10 +24,17 @@ type authResult struct {
 }
 
 func authHelper(ac *apiClient, cmd *cobra.Command, args []string) error {
+	apiKey, apiToken, credentialsProvided := getProvidedCredentials()
+	if credentialsProvided {
+		ac.APIKey = apiKey
+		ac.Token = apiToken
+		return nil
+	}
+
 	profile, err := getProfile()
 	if err != nil {
-		fmt.Println("unable to load the profile.")
-		fmt.Println("run `soracom configure` first.")
+		fmt.Fprintln(os.Stderr, "unable to load the profile.")
+		fmt.Fprintln(os.Stderr, "run `soracom configure` first.")
 		return err
 	}
 
@@ -49,7 +57,6 @@ func authHelper(ac *apiClient, cmd *cobra.Command, args []string) error {
 
 	res, err := ac.callAPI(params)
 	if err != nil {
-		fmt.Println("auth failed: ", err.Error())
 		return err
 	}
 
@@ -63,6 +70,10 @@ func authHelper(ac *apiClient, cmd *cobra.Command, args []string) error {
 	ac.APIKey = ares.APIKey
 	ac.Token = ares.Token
 	return nil
+}
+
+func getProvidedCredentials() (string, string, bool) {
+	return providedAPIKey, providedAPIToken, (providedAPIKey != "" && providedAPIToken != "")
 }
 
 func toJSON(x interface{}) string {
