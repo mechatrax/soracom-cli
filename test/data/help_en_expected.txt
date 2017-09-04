@@ -11,9 +11,15 @@ Available Commands:
   coupons            List or register coupons.
   credentials        List, create, update or delete credentials sets.
   data               Get stored data from subscribers.
+  devices            Manage devices.
   event-handlers     List, create, update or delete event handlers.
+  files              Get an exported file.
   groups             List, create, update or delete groups.
+  help               Help about any command
   logs               List logs.
+  lora-devices       Manage LoRa devices.
+  lora-gateways      Manage LoRa gateways.
+  lora-network-sets  Manage LoRa network sets.
   operator           Manage operators.
   orders             List, create or cancel orders.
   payer-information  Get or edit payer information.
@@ -25,12 +31,16 @@ Available Commands:
   shipping-addresses List, create, update or delete shipping addresses.
   stats              Show or export statistics.
   subscribers        Manage subscribers.
+  unconfigure        Remove configurations.
   users              Manage SAM users.
   version            Show version info.
   vpg                List, create, update or delete VPGs.
 
 Flags:
+      --api-key string         Specify API key otherwise soracom-cli performs authentication on behalf of you
+      --api-token string       Specify API token otherwise soracom-cli performs authentication on behalf of you
       --coverage-type string   Specify coverage type
+  -h, --help                   help for soracom
       --profile string         Specify profile name
 
 Use "soracom [command] --help" for more information about a command.

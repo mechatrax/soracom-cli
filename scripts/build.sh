@@ -1,5 +1,5 @@
 #!/bin/bash
-d=$( cd "$(dirname "$0" )"; cd ..; pwd )
+d=$( cd "$(dirname "$0" )"; cd ..; pwd -P )
 
 : "Checking shell scripts" && {
     command -v shellcheck > /dev/null 2>&1 && {
@@ -21,6 +21,9 @@ if [ -z "$2" ]; then
     TARGETS="linux windows darwin"
 fi
 
+# https://github.com/niemeyer/gopkg/issues/50
+git config --global http.https://gopkg.in.followRedirects true
+
 : "Installing dependencies" && {
     echo "Installing build dependencies ..."
     go get -u golang.org/x/tools/cmd/goimports
@@ -28,6 +31,7 @@ fi
     go get -u github.com/jteeuwen/go-bindata/...
     go get -u github.com/laher/goxc
     go get -u github.com/GoASTScanner/gas
+    go get -u github.com/elazarl/goproxy
 }
 
 : "Testing generator's library" && {
@@ -47,7 +51,7 @@ fi
     gas ./...
     go test
     go build -o generate-cmd
-    ./generate-cmd -a "$d/generators/assets/soracom-api.ftl.yaml" -t "$d/generators/cmd/templates" -p "$d/generators/cmd/predefined" -o "$d/soracom/generated/cmd/"
+    ./generate-cmd -a "$d/generators/assets/soracom-api.en.yaml" -t "$d/generators/cmd/templates" -p "$d/generators/cmd/predefined" -o "$d/soracom/generated/cmd/"
     popd > /dev/null
 }
 
@@ -56,6 +60,8 @@ fi
     echo "Building artifacts ..."
     go generate
     go get ./...
+    go get -u github.com/bearmini/go-acl # required to specify some dependencies explicitly as they are imported only in windows builds
+    go get -u golang.org/x/sys/windows
     gofmt -s -w .
     gas ./...
     #gox -ldflags="-X github.com/soracom/soracom-cli/soracom/generated/cmd.version $VERSION" -osarch="windows/386 windows/amd64 darwin/amd64 linux/386 linux/amd64 linux/arm" -parallel=6 -output="bin/{{.OS}}/{{.Arch}}/soracom"

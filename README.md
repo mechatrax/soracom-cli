@@ -21,6 +21,14 @@ The `soracom` command:
   eval "$(soracom completion)"
   ```
 
+  if you are a macOS user, you probably need to either:
+  1. use `bash` version >= 4.0, or
+  2. use `brew install bash-completion` instead of using Xcode version of bash-completion
+
+  otherwise you might be getting the error like the following:
+  ```
+  -bash: __ltrim_colon_completions: command not found
+  ```
 
 # How to install
 
@@ -123,6 +131,25 @@ Or
 ```
 HTTP_PROXY=http://10.0.1.2:8080 soracom subscribers list
 ```
+
+
+### Trouble shooting
+
+If you get an error message like the following:
+
+```
+Error: Permissions for the file 'path/to/default.json' which contains your credentials are too open.
+It is required that your credential files are NOT accessible by others.
+```
+
+Please try the following to fix it:
+
+```
+soracom unconfigure
+soracom configure
+```
+
+i.e. perform `unconfigure` and then `configure` again in order to re-create a credentials file with appropriate permissions.
 
 
 # How to build / test

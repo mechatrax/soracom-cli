@@ -1,0 +1,14 @@
+Source: soracom-cli
+Section: net
+Priority: extra
+Maintainer: Masahiro Honda <honda@mechatrax.com>
+Build-Depends: debhelper (>= 9), golang-go (>= 1.4)
+Standards-Version: 3.9.6
+
+Package: soracom-cli
+Provides: soracom
+Replaces: soracom
+Breaks: soracom
+Conflicts: ruby-soracom
+Architecture: any
+Description: A command line tool soracom to invoke SORACOM API

@@ -11,9 +11,15 @@ Available Commands:
   coupons            登録済みクーポンを確認したりアカウントへのクーポン登録を行います。
   credentials        認証情報に関する操作を行います。
   data               SIM からアップロードされて格納されているデータを取得します。
+  devices            デバイスに関する操作を行います。
   event-handlers     イベントハンドラーに関する操作を行います。
+  files              エクスポートされたファイルを取得します。
   groups             グループに関する操作を行います。
+  help               Help about any command
   logs               ログに関する操作を行います。
+  lora-devices       LoRa device に関する操作を行います。
+  lora-gateways      LoRa gateway に関する操作を行います。
+  lora-network-sets  LoRa network set に関する操作を行います。
   operator           オペレーターに関する操作を行います。
   orders             商品の注文に関する操作を行います。
   payer-information  課金明細に出力する支払い者情報を取得または設定します。
@@ -25,12 +31,16 @@ Available Commands:
   shipping-addresses 出荷先情報に関する操作を行います。
   stats              統計情報に関する操作を行います。
   subscribers        サブスクライバー (SIM) に関する操作を行います。
+  unconfigure        コマンド実行環境（プロファイル）を削除します。
   users              SAM ユーザーに関する操作を行います。
   version            バージョン情報を表示します。
   vpg                VPG に関する操作を行います。
 
 Flags:
+      --api-key string         Specify API key otherwise soracom-cli performs authentication on behalf of you
+      --api-token string       Specify API token otherwise soracom-cli performs authentication on behalf of you
       --coverage-type string   Specify coverage type
+  -h, --help                   help for soracom
       --profile string         Specify profile name
 
 Use "soracom [command] --help" for more information about a command.

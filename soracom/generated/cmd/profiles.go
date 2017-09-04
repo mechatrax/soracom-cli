@@ -13,6 +13,7 @@ import (
 
 	"github.com/kennygrant/sanitize"
 	"github.com/mitchellh/go-homedir"
+	"github.com/soracom/soracom-cli/generators/lib"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -91,18 +92,18 @@ func loadProfile(profileName string) (*profile, error) {
 
 	path := filepath.Join(dir, profileName+".json")
 
-	// check if permission is 0600
-	if runtime.GOOS != "windows" {
-		s, err := os.Stat(path)
-		if err != nil {
-			return nil, err
+	// check if permission is less than 0600
+	tooOpen, err := lib.IsFilePermissionTooOpen(path)
+	if err != nil {
+		return nil, err
+	}
+	if tooOpen {
+		msg := fmt.Sprintf(TRCLI("cli.configure.profile.permission_is_too_open"), path)
+		if runtime.GOOS != "windows" {
+			return nil, errors.New(msg)
 		}
-
-		if s.Mode()&077 != 0 {
-			return nil, fmt.Errorf("permission for %s is too open", path)
-		}
-	} else {
-		// TODO: handle ACL on windows env
+		// only warn on windows
+		fmt.Fprintf(os.Stderr, "WARN: "+msg+"\n")
 	}
 
 	b, err := ioutil.ReadFile(path)
@@ -132,7 +133,6 @@ func saveProfile(profileName string, prof *profile) error {
 
 	path := filepath.Join(dir, profileName+".json")
 
-	// check if profile dir exists
 	err = os.MkdirAll(dir, 0700)
 	if err != nil {
 		return err
@@ -141,17 +141,16 @@ func saveProfile(profileName string, prof *profile) error {
 	// check if profile file already exists
 	if _, err := os.Stat(path); err == nil {
 		// prompt if overwrites or not when already exist
-		fmt.Printf(TR("configure.cli.profile.overwrite"), profileName)
+		fmt.Printf(TRCLI("cli.configure.profile.overwrite"), profileName)
 		var s string
 		fmt.Scanf("%s\n", &s)
 		if s != "" && strings.ToLower(s) != "y" {
 			return errors.New("abort")
 		}
 
-		os.Chmod(path, 0600)
-
-		if runtime.GOOS == "windows" {
-			// TODO: handle ACL on windows
+		err = lib.ProtectFile(path)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -165,11 +164,33 @@ func saveProfile(profileName string, prof *profile) error {
 		return err
 	}
 
-	if runtime.GOOS == "windows" {
-		// TODO: handle ACL on windows
+	err = lib.ProtectFile(path)
+	if err != nil {
+		return err
 	}
 
 	return nil
+}
+
+func confirmDeleteProfile(profileName string) bool {
+	fmt.Printf(TRCLI("cli.unconfigure.prompt"), profileName)
+	var s string
+	fmt.Scanf("%s\n", &s)
+	if s != "" && strings.ToLower(s) == "y" {
+		return true
+	}
+	return false
+}
+
+func deleteProfile(profileName string) error {
+	dir, err := getProfileDir()
+	if err != nil {
+		return err
+	}
+
+	path := filepath.Join(dir, profileName+".json")
+
+	return os.Remove(path)
 }
 
 func collectProfileInfo(profileName string) (*profile, error) {
@@ -178,7 +199,7 @@ func collectProfileInfo(profileName string) (*profile, error) {
 		return nil, err
 	}
 
-	fmt.Printf(TR("configure.cli.profile.prompt"), profDir, getSpecifiedProfileName())
+	fmt.Printf(TRCLI("cli.configure.profile.prompt"), profDir, getSpecifiedProfileName())
 
 	ct, err := collectCoverageType()
 	if err != nil {
@@ -212,10 +233,10 @@ func readPassword(prompt string) (string, error) {
 }
 
 func collectCoverageType() (string, error) {
-	fmt.Print(TR("configure.cli.profile.coverage_type.prompt"))
+	fmt.Print(TRCLI("cli.configure.profile.coverage_type.prompt"))
 	var i int
 	for {
-		fmt.Print(TR("configure.cli.profile.coverage_type.select"))
+		fmt.Print(TRCLI("cli.configure.profile.coverage_type.select"))
 		fmt.Scanf("%d\n", &i)
 		if i >= 1 && i <= 2 {
 			break
@@ -233,10 +254,10 @@ func collectCoverageType() (string, error) {
 }
 
 func collectAuthInfo() (*authInfo, error) {
-	fmt.Printf(TR("configure.cli.profile.auth.prompt"))
+	fmt.Printf(TRCLI("cli.configure.profile.auth.prompt"))
 	var i int
 	for {
-		fmt.Print(TR("configure.cli.profile.auth.select"))
+		fmt.Print(TRCLI("cli.configure.profile.auth.select"))
 		fmt.Scanf("%d\n", &i)
 		if i >= 1 && i <= 3 {
 			break
@@ -248,8 +269,10 @@ func collectAuthInfo() (*authInfo, error) {
 		var authKeyID, authKey string
 		fmt.Print("authKeyId: ")
 		fmt.Scanf("%s\n", &authKeyID)
-		fmt.Print("authKey: ")
-		fmt.Scanf("%s\n", &authKey)
+		authKey, err := readPassword("authKey: ")
+		if err != nil {
+			return nil, err
+		}
 		return &authInfo{AuthKeyID: &authKeyID, AuthKey: &authKey}, nil
 	case 2:
 		var email string
