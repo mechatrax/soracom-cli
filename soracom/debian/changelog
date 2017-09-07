@@ -1,3 +1,10 @@
+soracom-cli (0.2.4-1) unstable; urgency=low
+
+  * Update to latest version
+  * Update debian/control
+
+ -- Masahiro Honda <honda@mechatrax.com>  Thu, 07 Sep 2017 16:58:49 +0900
+
 soracom-cli (0.1.7-1) unstable; urgency=low
 
   * Initial release
