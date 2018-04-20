@@ -22,6 +22,8 @@ fi
 uname_m="$(uname -m)"
 if [ "$uname_m" == "x86_64" ]; then
     ARCH=amd64
+elif [ "$uname_m" == "armv7l" ] || [ "$uname_m" == "armv6l" ]; then
+    ARCH=arm
 else
     echo "Machine architecture $uname_m is not supported for a test environment"
     exit 1
@@ -94,14 +96,14 @@ PASSWORD=$(random_string)
 : "Run soracom configure and create the default profile" && {
     expect -c "$(cat <<EOD
 spawn env ${SORACOM_ENVS[@]} $SORACOM configure
-expect "\(1-2\)"
-send -- "2\n"
-expect "\(1-3\)"
-send -- "2\n"
+expect "\\(1-2\\)"
+send -- "2\\n"
+expect "\\(1-3\\)"
+send -- "2\\n"
 expect "email: "
-send -- "$EMAIL\n"
+send -- "$EMAIL\\n"
 expect "password: "
-send -- "$PASSWORD\r\n"
+send -- "$PASSWORD\\r\\n"
 expect eof
 EOD
 )"

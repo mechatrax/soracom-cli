@@ -1,3 +1,18 @@
+soracom-cli (0.2.8-1+git20180329.bfe246b) unstable; urgency=low
+
+  * Update to latest upstream
+
+ -- Masahiro Honda <honda@mechatrax.com>  Fri, 20 Apr 2018 19:00:17 +0900
+
+soracom-cli (0.2.5-2) unstable; urgency=low
+
+  * debian/copyright: Change Format URL
+  * Change package priority from extra to optional
+  * Update Standards-Version to 3.9.8
+  * Add jo and jq to Recommends
+
+ -- Masahiro Honda <honda@mechatrax.com>  Tue, 31 Oct 2017 16:46:58 +0900
+
 soracom-cli (0.2.5-1) unstable; urgency=low
 
   * Update to latest version

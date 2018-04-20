@@ -3,7 +3,7 @@ swagger: '2.0'
 info:
   title: SORACOM API
   description: SORACOM API v1
-  version: '20170705'
+  version: '20171109'
 # the domain of the service
 host: api.soracom.io
 # array of all schemes that your API supports
@@ -1955,7 +1955,7 @@ paths:
           format: IMSI
         - name: smsForwardingRequest
           in: body
-          description: SMS forwarding request that contains message body and its encoding type. 
+          description: SMS forwarding request that contains message body and its encoding type.
           required: true
           schema:
             '$ref': '#/definitions/SmsForwardingRequest'
@@ -2965,6 +2965,373 @@ paths:
           description: Deletion of specified tag complete.
         '404':
           description: The specified LoRa network set or the tag does not exist.
+
+# Sigfox devices
+  '/sigfox_devices':
+    get:
+      summary: List Sigfox devices.
+      description: Returns a list of Sigfox devices that match certain criteria. If the total number of Sigfox devices does not fit in one page, a URL for accessing the next page is returned in the 'Link' header of the response.
+      operationId: listSigfoxDevices
+      security:
+        - api_key: []
+        - api_token: []
+      x-soracom-cli:
+        - sigfox-devices list
+      parameters:
+        - name: tag_name
+          in: query
+          description: Tag name for filtering the search (exact match).
+          required: false
+          type: string
+        - name: tag_value
+          in: query
+          description: Tag search string for filtering the search. Required when `tag_name` has been specified.
+          required: false
+          type: string
+        - name: tag_value_match_mode
+          in: query
+          description: Tag match mode.
+          required: false
+          type: string
+          enum: [exact, prefix]
+          default: exact
+        - name: limit
+          in: query
+          description: Maximum number of Sigfox devices to retrieve.
+          required: false
+          type: integer
+        - name: last_evaluated_key
+          in: query
+          description: The device ID of the last device retrieved on the current page. By specifying this parameter, you can continue to retrieve the list from the next device onward.
+          required: false
+          type: string
+      tags:
+        - SigfoxDevice
+      responses:
+        200:
+          description: A list of Sigfox devices.
+          schema:
+            type: array
+            items:
+             '$ref': '#/definitions/SigfoxDevice'
+
+  '/sigfox_devices/{device_id}':
+    get:
+      summary: Get Sigfox device.
+      description: Returns information about the specified Sigfox device.
+      operationId: getSigfoxDevice
+      security:
+        - api_key: []
+        - api_token: []
+      x-soracom-cli:
+        - sigfox-devices get
+      parameters:
+        - name: device_id
+          in: path
+          description: Device ID of the target Sigfox device.
+          required: true
+          type: string
+      tags:
+        - SigfoxDevice
+      responses:
+        200:
+          description: The Sigfox device's detailed information.
+          schema:
+           '$ref': '#/definitions/SigfoxDevice'
+        404:
+          description: The specified Sigfox device does not exist.
+
+  '/sigfox_devices/{device_id}/data':
+    get:
+      summary: Get data sent from a Sigfox device.
+      description: Returns a list of data entries sent from a Sigfox device that match certain criteria. If the total number of entries does not fit in one page, a URL for accessing the next page is returned in the 'Link' header of the response.
+      operationId: getDataFromSigfoxDevice
+      security:
+        - api_key: []
+        - api_token: []
+      x-soracom-cli:
+        - sigfox-devices get-data
+      parameters:
+        - name: device_id
+          in: path
+          description: Device ID of the target subscriber that generated data entries.
+          required: true
+          type: string
+        - name: from
+          in: query
+          description: Start time for the data entries search range (unixtime in milliseconds).
+          required: false
+          type: integer
+        - name: to
+          in: query
+          description: End time for the data entries search range (unixtime in milliseconds).
+          required: false
+          type: integer
+        - name: sort
+          in: query
+          description: Sort order of the data entries. Either descending (latest data entry first) or ascending (oldest data entry first).
+          required: false
+          type: string
+          enum: [desc, asc]
+          default: desc
+        - name: limit
+          in: query
+          description: Maximum number of data entries to retrieve.
+          required: false
+          type: integer
+        - name: last_evaluated_key
+          in: query
+          description: The value of `time` in the last log entry retrieved in the previous page. By specifying this parameter, you can continue to retrieve the list from the next page onward.
+          required: false
+          type: string
+      tags:
+        - SigfoxDevice
+      responses:
+        200:
+          description: A list of data entries.
+          schema:
+            type: array
+            items:
+             '$ref': '#/definitions/DataEntry'
+    post:
+      summary: Send data to a Sigfox device.
+      description: Sends data to the specified Sigfox device. The data will be stored until the device sends a next uplink message. If another message destined for the same Sigfox device ID is already waiting to be sent, the existing message will be discarded, and the new message will be sent instead.
+      operationId: sendDataToSigfoxDevice
+      security:
+        - api_key: []
+        - api_token: []
+      x-soracom-cli:
+        - sigfox-devices send-data
+      parameters:
+        - name: device_id
+          in: path
+          description: ID of the recipient device.
+          required: true
+          type: string
+        - name: data
+          in: body
+          description: Binary data encoded as a hexadecimal string. Length of original binary data must be 8 octets (16 characters when encoded as a hexadecimal string).
+          schema:
+            '$ref': '#/definitions/SigfoxData'
+          required: true
+      tags:
+        - SigfoxDevice
+      responses:
+        204:
+          description: Data has been received by server and waiting for the recipient device to retrieve.
+        404:
+          description: No such device found.
+
+  '/sigfox_devices/{device_id}/terminate':
+    post:
+      summary: Terminate Sigfox device.
+      description: Terminates the specified Sigfox device
+      operationId: terminateSigfoxDevice
+      security:
+        - api_key: []
+        - api_token: []
+      x-soracom-cli:
+        - sigfox-devices terminate
+      consumes: [text/plain]
+      produces: [application/json]
+      parameters:
+        - name: device_id
+          in: path
+          description: Device ID of the target Sigfox device.
+          required: true
+          type: string
+      tags:
+        - SigfoxDevice
+      responses:
+        200:
+          description: The Sigfox device's detailed information after the update.
+          schema:
+           '$ref': '#/definitions/SigfoxDevice'
+        404:
+          description: The specified Sigfox device does not exist.
+
+  '/sigfox_devices/{device_id}/enable_termination':
+    post:
+      summary: Enable Termination of Sigfox device.
+      description: Enables termination of specified Sigfox device.
+      operationId: enableTerminationOnSigfoxDevice
+      security:
+        - api_key: []
+        - api_token: []
+      x-soracom-cli:
+        - sigfox-devices enable-termination
+      consumes: [text/plain]
+      produces: [application/json]
+      parameters:
+        - name: device_id
+          in: path
+          description: Device ID of the target Sigfox device.
+          required: true
+          type: string
+      tags:
+        - SigfoxDevice
+      responses:
+        200:
+          description: The Sigfox device's detailed information after the update.
+          schema:
+           '$ref': '#/definitions/SigfoxDevice'
+        404:
+          description: The specified Sigfox device does not exist.
+
+  '/sigfox_devices/{device_id}/disable_termination':
+    post:
+      summary: Disable Termination of Sigfox device.
+      description: Disables termination of specified Sigfox device.
+      operationId: disableTerminationOnSigfoxDevice
+      security:
+        - api_key: []
+        - api_token: []
+      x-soracom-cli:
+        - sigfox-devices disable-termination
+      consumes: [text/plain]
+      produces: [application/json]
+      parameters:
+        - name: device_id
+          in: path
+          description: Device ID of the target Sigfox device.
+          required: true
+          type: string
+      tags:
+        - SigfoxDevice
+      responses:
+        200:
+          description: The Sigfox device's detailed information after the update.
+          schema:
+           '$ref': '#/definitions/SigfoxDevice'
+        404:
+          description: The specified Sigfox device does not exist.
+
+  '/sigfox_devices/{device_id}/set_group':
+    post:
+      summary: Set Group of Sigfox device.
+      description: Sets or overwrites a group for the specified Sigfox device.
+      operationId: setSigfoxDeviceGroup
+      security:
+        - api_key: []
+        - api_token: []
+      x-soracom-cli:
+        - sigfox-devices set-group
+      consumes: [application/json]
+      produces: [application/json]
+      parameters:
+        - name: device_id
+          in: path
+          description: Device ID of the target Sigfox device.
+          required: true
+          type: string
+        - name: group
+          in: body
+          description: Group (may include ID only).
+          schema:
+           '$ref': '#/definitions/Group'
+          required: true
+      tags:
+        - SigfoxDevice
+      responses:
+        200:
+          description: The Sigfox device's detailed information after the update.
+          schema:
+           '$ref': '#/definitions/SigfoxDevice'
+        404:
+          description: The specified Sigfox device does not exist.
+
+  '/sigfox_devices/{device_id}/unset_group':
+    post:
+      summary: Unset Group of Sigfox device.
+      description: Removes the group configuration from the specified Sigfox device.
+      operationId: unsetSigfoxDeviceGroup
+      security:
+        - api_key: []
+        - api_token: []
+      x-soracom-cli:
+        - sigfox-devices unset-group
+      consumes: [text/plain]
+      produces: [application/json]
+      parameters:
+        - name: device_id
+          in: path
+          description: Device ID of the target Sigfox device.
+          required: true
+          type: string
+      tags:
+        - SigfoxDevice
+      responses:
+        200:
+          description: The Sigfox device's detailed information after the update.
+          schema:
+           '$ref': '#/definitions/SigfoxDevice'
+        404:
+          description: The specified Sigfox device does not exist or the Sigfox device does not belong to a group.
+
+  '/sigfox_devices/{device_id}/tags':
+    put:
+      summary: Bulk Insert or Update Sigfox device Tags.
+      description: Inserts/updates tags for the specified Sigfox device.
+      operationId: putSigfoxDeviceTags
+      security:
+        - api_key: []
+        - api_token: []
+      x-soracom-cli:
+        - sigfox-devices put-tags
+      parameters:
+        - name: device_id
+          in: path
+          description: Device ID of the target Sigfox device.
+          required: true
+          type: string
+        - name: tags
+          in: body
+          description: Array of tags to be inserted/updated.
+          schema:
+            type: array
+            items:
+             '$ref': '#/definitions/TagUpdateRequest'
+
+          required: true
+      tags:
+        - SigfoxDevice
+      responses:
+        200:
+          description: The Sigfox device's detailed information after the update.
+          schema:
+           '$ref': '#/definitions/SigfoxDevice'
+        404:
+          description: The specified Sigfox device does not exist.
+
+  '/sigfox_devices/{device_id}/tags/{tag_name}':
+    delete:
+      summary: Delete Sigfox device Tag.
+      description: Deletes a tag from the specified Sigfox device.
+      operationId: deleteSigfoxDeviceTag
+      x-sam-operationId: deleteTag
+      security:
+        - api_key: []
+        - api_token: []
+      x-soracom-cli:
+        - sigfox-devices delete-tag
+      parameters:
+        - name: device_id
+          in: path
+          description: device ID of the target Sigfox device.
+          required: true
+          type: string
+        - name: tag_name
+          in: path
+          description: Tag name to be deleted. (This will be part of a URL path, so it needs to be percent-encoded. In JavaScript, specify the name after it has been encoded using encodeURIComponent().)
+          type: string
+          required: true
+      tags:
+        - SigfoxDevice
+      responses:
+        204:
+          description: Deletion of specified tag complete.
+        404:
+          description: The specified Sigfox device or the tag does not exist.
 
 # Billing
   '/bills':
@@ -5339,73 +5706,6 @@ paths:
           description: Resource is not executable
         '404':
           description: Resource is not found
-  "/v1/devices/{deviceId}/{object}/{instance}/observe":
-    post:
-      tags:
-      - Device
-      summary: Triggers observation of resources under a specified object instance of a device
-      description: Triggers observation of resources under a specified object instance of a device
-      operationId: observeDeviceResources
-      parameters:
-      - name: deviceId
-        in: path
-        description: Target device
-        required: true
-        type: string
-      - name: object
-        in: path
-        description: Object ID
-        required: true
-        type: string
-      - name: instance
-        in: path
-        description: Instance ID
-        required: true
-        type: string
-      - name: model
-        in: query
-        description: Whether or not to add model information
-        required: false
-        type: boolean
-        default: false
-      responses:
-        '200':
-          description: Observation started. Returns current snapshot of the specified object instance
-          schema:
-            "$ref": "#/definitions/ObjectInstance"
-        '400':
-          description: Object instance is not readable
-        '404':
-          description: Object instance is not found
-
-  "/v1/devices/{deviceId}/{object}/{instance}/unobserve":
-    post:
-      tags:
-      - Device
-      summary: Stops observation of an object instance of a device
-      description: Stops observation of an object instance of a device
-      operationId: unobserveDeviceResources
-      parameters:
-      - name: deviceId
-        in: path
-        description: Target device
-        required: true
-        type: string
-      - name: object
-        in: path
-        description: Object ID
-        required: true
-        type: string
-      - name: instance
-        in: path
-        description: Instance ID
-        required: true
-        type: string
-      responses:
-        '204':
-          description: Observation cancelled
-        '404':
-          description: Object instance is not found
 
   "/devices/{deviceId}/{object}/{instance}/{resource}/observe":
     post:
@@ -5494,6 +5794,100 @@ paths:
           description: Observation cancelled
         '404':
           description: Resource is not found
+
+# Query (search)
+  "/query/subscribers":
+    get:
+      tags:
+        - Query
+      summary: Search subscribers by query terms
+      description: Search subscibers by query terms. It returns partial match results.  When this API permission is allowed, it grants the authority to search and retrieve all SIMs that includes group information.
+      operationId: searchSubscribers
+      consumes: [application/json]
+      produces: [application/json;charset=UTF-8]
+      security:
+        - api_key: []
+        - api_token: []
+      x-soracom-cli:
+        - query subscribers
+      parameters:
+      - name: name
+        description: Name to search
+        in: query
+        required: false
+        type: array
+        items: {type: string}
+        collectionFormat: multi
+      - name: group
+        description: Group name to search
+        in: query
+        required: false
+        type: array
+        items: {type: string}
+        collectionFormat: multi
+      - name: imsi
+        description: IMSI to search
+        in: query
+        required: false
+        type: array
+        items: {type: string}
+        collectionFormat: multi
+      - name: msisdn
+        description: MSISDN to search
+        in: query
+        required: false
+        type: array
+        items: {type: string}
+        collectionFormat: multi
+      - name: iccid
+        description: ICCID to search
+        in: query
+        required: false
+        type: array
+        items: {type: string}
+        collectionFormat: multi
+      - name: serial_number
+        description: Serial number to search
+        in: query
+        required: false
+        type: array
+        items: {type: string}
+        collectionFormat: multi
+      - name: tag
+        description: String of tag values to search
+        in: query
+        required: false
+        type: array
+        items: {type: string}
+        collectionFormat: multi
+      - name: limit
+        description: The maximum number of item to retrieve
+        in: query
+        required: false
+        default: 10
+        maximum: 100
+        type: integer
+        format: int32
+      - name: last_evaluated_key
+        in: query
+        description: The IMSI of the last subscriber retrieved on the current page. By specifying this parameter, you can continue to retrieve the list from the next subscriber onward.
+        required: false
+        type: string
+      - name: search_type
+        in: query
+        description: "Type of the search ('AND searching' or 'OR searching')"
+        required: false
+        type: string
+        default: and
+        enum: [and, or]
+      responses:
+        '200':
+          description: "Returns result of searching"
+          schema:
+            type: array
+            items: {$ref: '#/definitions/Subscriber'}
+        '400':
+          description: "Invalid search queries"
 
 definitions:
 
@@ -6842,6 +7236,8 @@ definitions:
         - ready
         - terminated
         - instock
+      lastSeen:
+        "$ref": "#/definitions/LastSeen"
       tags:
         type: object
         additionalProperties:
@@ -6913,6 +7309,55 @@ definitions:
     properties:
       networkSetId:
         type: string
+
+# SigfoxData
+  SigfoxData:
+    properties:
+      data:
+        type: string
+
+# SigfoxDevice
+  SigfoxDevice:
+    type: object
+    properties:
+      deviceId:
+        type: string
+      operatorId:
+        type: string
+      groupId:
+        type: string
+      lastModifiedTime:
+        type: string
+        format: date-time
+      terminationEnabled:
+        type: boolean
+        default: false
+      status:
+        type: string
+        enum:
+        - active
+        - ready
+        - terminated
+        - instock
+      lastSeen:
+        "$ref": "#/definitions/LastSeen"
+      tags:
+        type: object
+        additionalProperties:
+          type: string
+
+  LastSeen:
+    type: object
+    properties:
+      time:
+        type: string
+        format: date-time
+      snr:
+        type: integer
+        format: int32
+      rssi:
+        type: integer
+        format: int32
 
   UpdatePermissionRequest:
     type: object
@@ -7042,6 +7487,7 @@ definitions:
       encodingType:
         type: integer
         description: Encoding type of the message body. `1` indicates the body is `DCS_7BIT` that only supports single byte characters. `2` is `DCS_UCS2` that supports multi-byte text. When omitted, it is treated as `2` (`DCS_UCS2`).
+        default: 2
       payload:
         type: string
 
