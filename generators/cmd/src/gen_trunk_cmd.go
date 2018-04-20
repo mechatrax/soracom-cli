@@ -184,6 +184,14 @@ func generateTrunkCommands(templateDir, outputDir string) error {
 			FileName:                  "shipping_addresses.go",
 		},
 		{
+			Use:                       "sigfox-devices",
+			Short:                     "cli.sigfox-devices.summary",
+			Long:                      "cli.sigfox-devices.description",
+			CommandVariableName:       "SigfoxDevicesCmd",
+			ParentCommandVariableName: "RootCmd",
+			FileName:                  "sigfox_devices.go",
+		},
+		{
 			Use:                       "stats",
 			Short:                     "cli.stats.summary",
 			Long:                      "cli.stats.description",
@@ -262,6 +270,14 @@ func generateTrunkCommands(templateDir, outputDir string) error {
 			CommandVariableName:       "LogsCmd",
 			ParentCommandVariableName: "RootCmd",
 			FileName:                  "logs.go",
+		},
+		{
+			Use:                       "query",
+			Short:                     "cli.query.summary",
+			Long:                      "cli.query.description",
+			CommandVariableName:       "QueryCmd",
+			ParentCommandVariableName: "RootCmd",
+			FileName:                  "query.go",
 		},
 	}
 
