@@ -175,3 +175,17 @@ If the build succeeds, then run the test:
 ./test/test.sh
 ```
 
+
+# How to release
+
+```
+VERSION=1.2.3                         # => specify a version number to be released
+./scripts/build.sh $VERSION           # => build a version to be released
+./test/test.sh $VERSION            # => test the version
+# commit & push all changes to github
+./scripts/release.sh $VERSION         # => release the version to GitHub
+# edit the release on github.com release page
+./scripts/update-homebrew-formula.sh $VERSION $GITHUB_USERNAME $GITHUB_EMAIL
+./scripts/build-snap.sh $VERSION
+./scripts/release-snap.sh $VERSION
+```
