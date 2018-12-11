@@ -1,3 +1,9 @@
+soracom-cli (0.3.9-1) UNRELEASED; urgency=medium
+
+  * New upstream release
+
+ -- Masahiro Honda <honda@mechatrax.com>  Tue, 11 Dec 2018 14:07:06 +0900
+
 soracom-cli (0.3.8-1) unstable; urgency=medium
 
   * New upstream release
