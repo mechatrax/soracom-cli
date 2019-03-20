@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 d="$( cd "$( dirname "$0" )"; cd ..; pwd -P )"
 set -e
 
@@ -9,18 +9,8 @@ if [ -z "$1" ]; then
 fi
 
 
-uname_s="$(uname -s)"
-if [ "$uname_s" == "Darwin" ]; then
-    OS=darwin
-elif [ "$uname_s" == "Linux" ]; then
-    OS=linux
-else
-    echo "Operating system $uname_s is not supported for a test environment"
-    exit 1
-fi
-
 uname_m="$(uname -m)"
-if [ "$uname_m" == "x86_64" ]; then
+if [ "$uname_m" == "x86_64" ] || [ "$uname_m" == "amd64" ]; then
     ARCH=amd64
 elif [ "$uname_m" == "armv7l" ] || [ "$uname_m" == "armv6l" ] || [ "$uname_m" == "aarch64" ]; then
     ARCH=arm
@@ -74,6 +64,8 @@ CITY="港区"
 ADDR1="赤坂1-2-3"
 FULL_NAME="ソラコム 太郎"
 PHONE="03-1234-5678"
+
+OS=$( uname -s | tr '[:upper:]' '[:lower:]' )
 
 SORACOM="$d/soracom/dist/$VERSION/soracom_${VERSION}_${OS}_${ARCH}"
 
