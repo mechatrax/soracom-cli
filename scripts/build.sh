@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 d=$( cd "$(dirname "$0" )"; cd ..; pwd -P )
 
 : "Check if shell scripts are healthy" && {
@@ -36,7 +36,11 @@ fi
 
 TARGETS=$2
 if [ -z "$2" ]; then
-    TARGETS="linux windows darwin"
+    TARGETS="linux windows darwin freebsd"
+    uname_s=$( uname -s | tr '[:upper:]' '[:lower:]' )
+    if [[ "$TARGETS" != *"$uname_s"* ]]; then
+        TARGETS="$TARGETS $uname_s"
+    fi
 fi
 
 # https://github.com/niemeyer/gopkg/issues/50
@@ -44,23 +48,18 @@ git config --global http.https://gopkg.in.followRedirects true
 
 : "Install dependencies" && {
     echo "Installing build dependencies ..."
-    set -x
     go get -u golang.org/x/tools/cmd/goimports
     go get -u github.com/jessevdk/go-assets
     go get -u github.com/jessevdk/go-assets-builder
     go get -u github.com/laher/goxc
-    #go get -u github.com/securego/gosec/cmd/gosec/...
     go get -u github.com/elazarl/goproxy
-    set +x
 
     echo "Installing runtime dependencies ..."
     go get -u github.com/inconshreveable/mousetrap # required by spf13/cobra (only for windows env)
-    #dep ensure -update
 }
 
 : "Test generator's library" && {
     pushd "$d/generators/lib" > /dev/null
-    #go get ./...
     go test
     popd > /dev/null
 }
@@ -69,10 +68,8 @@ git config --global http.https://gopkg.in.followRedirects true
     echo "Generating generator ..."
     pushd "$d/generators/cmd/src" > /dev/null
     go generate
-    #go get ./...
     go vet
     goimports -w ./*.go
-    #gosec ./...
     go test
     go build -o generate-cmd
 
@@ -85,23 +82,25 @@ git config --global http.https://gopkg.in.followRedirects true
     pushd "$d/soracom" > /dev/null
     echo "Building artifacts ..."
     go generate
-    #go get ./...
     go get -u github.com/bearmini/go-acl # required to specify some dependencies explicitly as they are imported only in windows builds
     go get -u golang.org/x/sys/windows
     gofmt -s -w .
-    #gosec ./...
-    #gox -ldflags="-X github.com/soracom/soracom-cli/soracom/generated/cmd.version $VERSION" -osarch="windows/386 windows/amd64 darwin/amd64 linux/386 linux/amd64 linux/arm" -parallel=6 -output="bin/{{.OS}}/{{.Arch}}/soracom"
     goxc -bc="$TARGETS" -d=dist/ -pv=$VERSION -build-ldflags="-X github.com/soracom/soracom-cli/soracom/generated/cmd.version=$VERSION"
 
-    # non-zipped versions for homebrew
+    # non-zipped versions for homebrew and testing
     echo "Building artifacts for homebrew (no zip) ..."
-    goxc -bc="darwin linux" -d=dist/ -pv=$VERSION -build-ldflags="-X github.com/soracom/soracom-cli/soracom/generated/cmd.version=$VERSION" -tasks-=archive-zip,rmbin
-    mv "dist/$VERSION/darwin_386/soracom"   "dist/$VERSION/soracom_${VERSION}_darwin_386"
-    mv "dist/$VERSION/darwin_amd64/soracom" "dist/$VERSION/soracom_${VERSION}_darwin_amd64"
-    mv "dist/$VERSION/linux_386/soracom"   "dist/$VERSION/soracom_${VERSION}_linux_386"
-    mv "dist/$VERSION/linux_amd64/soracom" "dist/$VERSION/soracom_${VERSION}_linux_amd64"
-    rmdir "dist/$VERSION/darwin_386"
-    rmdir "dist/$VERSION/darwin_amd64"
+    goxc -bc="$TARGETS" -d=dist/ -pv=$VERSION -build-ldflags="-X github.com/soracom/soracom-cli/soracom/generated/cmd.version=$VERSION" -tasks-=archive-zip,rmbin
+    for distfile in dist/"$VERSION"/*/soracom; do
+       distos=$( echo "$distfile" | awk -F '/' '{print $3}' )
+       mv "$distfile" "dist/$VERSION/soracom_${VERSION}_${distos}"
+    done
+    for distfile in dist/"$VERSION"/*/soracom.exe; do
+       distos=$( echo "$distfile" | awk -F '/' '{print $3}' )
+       mv "$distfile" "dist/$VERSION/soracom_${VERSION}_${distos}.exe"
+    done
+
+    # removing empty directories
+    find "dist/$VERSION" -type d -empty -delete
 
     popd > /dev/null
 }
