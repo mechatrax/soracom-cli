@@ -178,7 +178,7 @@ func (ac *apiClient) callAPI(params *apiParams) (http.Header, string, error) {
 
 	if ac.verbose {
 		dumpHTTPResponse(res)
-		fmt.Println("==========")
+		printfStderr("==========\n")
 	}
 
 	if res.StatusCode >= http.StatusBadRequest {
@@ -242,20 +242,16 @@ func splitVersionString(ver string) []string {
 }
 
 func (ac *apiClient) doHTTPRequestWithRetries(req *http.Request) (*http.Response, error) {
-	var err error
 	backoffSeconds := []int{10, 10, 20, 30, 50}
 	for _, wait := range backoffSeconds {
-		var res *http.Response
-		res, err = ac.httpClient.Do(req)
+		res, err := ac.httpClient.Do(req)
 		if err == nil && !retryableError(res.StatusCode) {
 			return res, nil
 		}
 		if err != nil && res != nil && res.Body != nil {
 			defer func() {
-				// #nosec G104
-				res.Body.Close()
-				// #nosec G104
 				io.Copy(ioutil.Discard, res.Body)
+				res.Body.Close()
 			}()
 		}
 
@@ -306,24 +302,24 @@ func (ac *apiClient) SetVerbose(verbose bool) {
 func dumpHTTPRequest(req *http.Request) {
 	dump, err := httputil.DumpRequest(req, true)
 	if err != nil {
-		fmt.Println(err)
+		printfStderr("%s\n", err)
 		return
 	}
-	fmt.Println(string(dump))
+	printfStderr("%s\n", string(dump))
 }
 
 func dumpHTTPResponse(resp *http.Response) {
 	dump, err := httputil.DumpResponse(resp, true)
 	if err != nil {
-		fmt.Println(err)
+		printfStderr("%s\n", err)
 		return
 	}
-	fmt.Println(string(dump))
+	printfStderr("%s\n", string(dump))
 }
 
 func printfStderr(format string, args ...interface{}) {
 	_, err := fmt.Fprintf(os.Stderr, format, args...)
 	if err != nil {
-		fmt.Printf("err: %+v\n", err)
+		//fmt.Printf("err: %+v\n", err) // this messes up stdout
 	}
 }
