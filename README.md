@@ -161,7 +161,7 @@ soracom configure-sandbox --coverage-type jp --auth-key-id="$AUTHKEY_ID" --auth-
 
 ### Call API via proxy
 
-Set `http://your-proxy-nme:port` to HTTP_PROXY environment variable, then execute soracom command.
+Set `http://your-proxy-name:port` to HTTP_PROXY environment variable, then execute soracom command.
 
 e.g.) For Linux / Mac:
 Assume that the address of the proxy server is 10.0.1.2 and the port number is 8080
@@ -230,5 +230,5 @@ VERSION=1.2.3                         # => specify a version number to be releas
 ./scripts/build-snap.sh $VERSION
 ./scripts/release-snap.sh $VERSION
 ./scripts/build-lambda-layer.sh $VERSION
-./scripts/release-lambda-layer.sh $VERSION $AWS_PROFILE $AWS_REGION  # => we should release to tamasui/ap-northeast-1 (for jp users) & soracom-sng/eu-central-1 (global users). maybe some US regions too?
+./scripts/release-lambda-layer.sh $VERSION $AWS_PROFILE   # => this command releases the layer to all regions (except ap-east-1)
 ```
