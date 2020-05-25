@@ -10,17 +10,18 @@ require (
 	github.com/jessevdk/go-assets-builder v0.0.0-20130903091706-b8483521738f // indirect
 	github.com/jessevdk/go-flags v1.4.0 // indirect
 	github.com/kennygrant/sanitize v1.2.4
-	github.com/kr/pretty v0.1.0 // indirect
 	github.com/laher/argo v0.0.0-20140722103944-11d91c83cc0f // indirect
 	github.com/laher/goxc v0.18.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/pkg/errors v0.8.1
-	github.com/spf13/cobra v0.0.5
-	golang.org/x/crypto v0.0.0-20200109152110-61a87790db17
-	golang.org/x/sys v0.0.0-20200302150141-5c8b2ff67527
-	golang.org/x/tools v0.0.0-20200311035431-43e3193a9bc5 // indirect
-	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
-	gopkg.in/yaml.v2 v2.2.2
+	github.com/pkg/errors v0.9.1
+	github.com/spf13/cobra v1.0.0
+	github.com/spf13/pflag v1.0.5 // indirect
+	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37
+	golang.org/x/mod v0.3.0 // indirect
+	golang.org/x/net v0.0.0-20200520182314-0ba52f642ac2 // indirect
+	golang.org/x/sys v0.0.0-20200519105757-fe76b779f299
+	golang.org/x/tools v0.0.0-20200522201501-cb1345f3a375 // indirect
+	gopkg.in/yaml.v2 v2.3.0
 )
 
 go 1.13
