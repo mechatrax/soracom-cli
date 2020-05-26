@@ -53,6 +53,12 @@ tear_down() {
     }
 }
 
+if [ -z "$SORACOM_AUTHKEY_ID_FOR_TEST" ] || [ -z "$SORACOM_AUTHKEY_FOR_TEST" ]; then
+    echo
+    echo "ERROR: Env vars SORACOM_AUTHKEY_ID_FOR_TEST and SORACOM_AUTHKEY_FOR_TEST are required to use the API sandbox."
+    exit 1
+fi
+
 SORACOM_PROFILE_DIR=$tmpdir/.soracom
 : "${SORACOM_ENDPOINT:=https://api-sandbox.soracom.io}"
 SORACOM_ENVS=("SORACOM_ENDPOINT=$SORACOM_ENDPOINT" "SORACOM_PROFILE_DIR=$SORACOM_PROFILE_DIR" "SORACOM_DEBUG=$SORACOM_DEBUG")
@@ -76,7 +82,6 @@ SORACOM="$d/soracom/dist/$VERSION/soracom_${VERSION}_${OS}_${ARCH}"
         --auth-key "$SORACOM_AUTHKEY_FOR_TEST" \
         --email "$EMAIL" \
         --password "$PASSWORD" \
-        --register-payment-method "true" \
         --profile soracom-cli-test
 }
 
@@ -97,6 +102,24 @@ SORACOM="$d/soracom/dist/$VERSION/soracom_${VERSION}_${OS}_${ARCH}"
         --profile soracom-cli-test
         )"
     shipping_address_id="$( echo "$resp" | jq -r .shippingAddressId )"
+}
+
+: "Add coverage type 'g'" && {
+    resp="$( env "${SORACOM_ENVS[@]}" "$SORACOM" \
+        operator add-coverage-type \
+        --coverage-type g \
+        --profile soracom-cli-test
+    )"
+    echo "$resp"
+}
+
+: "Get current payment method for coverage type 'g'" && {
+    resp="$( env "${SORACOM_ENVS[@]}" "$SORACOM" \
+        payment-methods get-current \
+        --coverage-type g \
+        --profile soracom-cli-test
+    )"
+    echo "$resp"
 }
 
 : "Create an order: 3 SIM cards" && {
@@ -242,7 +265,21 @@ SORACOM="$d/soracom/dist/$VERSION/soracom_${VERSION}_${OS}_${ARCH}"
         --body '[{"key":"useVpg","value":true}]' \
         --profile soracom-cli-test
         )"
+}
 
+: "Sleep 15 seconds to make sure all subscribers indexed in the searchlight (elasticsearch)" && {
+    sleep 15
+}
+
+: "Query subscribers" && {
+    resp="$( env "${SORACOM_ENVS[@]}" "$SORACOM" \
+        query subscribers \
+        --imsi '00101' \
+        --limit 10 \
+        --profile soracom-cli-test
+        )"
+    numSubs="$( echo "$resp" | jq -r .[].imsi | wc -l )"
+    test "$numSubs" -eq 4
 }
 
 : "Checking english help text" && {

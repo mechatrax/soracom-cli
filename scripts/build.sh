@@ -8,9 +8,10 @@ d=$( cd "$( dirname "$0" )"; cd ..; pwd -P )
   }
 }
 
-goversion=1.13
+goversion=1.14
 docker pull "golang:$goversion"
 gopath=${GOPATH:-$HOME/go}
+gopath=${gopath%%:*}
 
 run_command_on_docker_container() {
   dir=$1
@@ -19,10 +20,9 @@ run_command_on_docker_container() {
   if [ -z "$WERCKER" ]; then
     docker run -i --rm \
       --user "$(id -u):$(id -g)" \
-      -e "GO111MODULE=on" \
       -v "$d":/go/src/github.com/soracom/soracom-cli \
       -v "$gopath":/go \
-      -v /tmp/.cache:/.cache \
+      -v "$d/.cache":/.cache \
       -w "/go/src/github.com/soracom/soracom-cli/$dir" \
       "golang:$goversion" bash -x -c "$cmd" || {
       echo -e "${RED}Build failed.${RESET}"
@@ -53,14 +53,13 @@ if [ -z "$2" ]; then
     fi
 fi
 
-
 : 'Install dependencies' && {
     echo 'Installing build dependencies ...'
     run_command_on_docker_container '' 'go get -u golang.org/x/tools/cmd/goimports'
-    run_command_on_docker_container '' 'go get -u github.com/jessevdk/go-assets'
-    run_command_on_docker_container '' 'go get -u github.com/jessevdk/go-assets-builder'
     run_command_on_docker_container '' 'go get -u github.com/laher/goxc'
-    run_command_on_docker_container '' 'go get -u github.com/elazarl/goproxy'
+
+    echo 'Installing commands used with "go generate" ...'
+    run_command_on_docker_container '' 'go get -u github.com/jessevdk/go-assets-builder'
 }
 
 : "Test generator's library" && {
