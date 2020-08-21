@@ -9,13 +9,19 @@ if [ -z "$1" ]; then
 fi
 
 
-uname_m="$(uname -m)"
-if [ "$uname_m" == "x86_64" ] || [ "$uname_m" == "amd64" ]; then
+if which gcc > /dev/null; then
+  machine="$(gcc -v 2>&1 | grep \^Target | sed -E 's/.*: ([^-]+).*/\1/')"
+else
+  machine="$(uname -m)"
+fi
+if [ "$machine" == "x86_64" ] || [ "$machine" == "amd64" ]; then
     ARCH=amd64
-elif [ "$uname_m" == "armv7l" ] || [ "$uname_m" == "armv6l" ] || [ "$uname_m" == "aarch64" ]; then
+elif [ "$machine" == "armv7l" ] || [ "$machine" == "armv6l" ] || [ "$machine" == "arm" ]; then
+    ARCH=arm
+elif [ "$machine" == "arm64" ] || [ "$machine" == "aarch64" ]; then
     ARCH=arm
 else
-    echo "Machine architecture $uname_m is not supported for a test environment"
+    echo "Machine architecture $machine is not supported for a test environment"
     exit 1
 fi
 
