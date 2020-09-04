@@ -9,8 +9,8 @@ if [ -z "$1" ]; then
 fi
 
 
-if which gcc > /dev/null; then
-  machine="$(gcc -v 2>&1 | grep \^Target | sed -E 's/.*: ([^-]+).*/\1/')"
+if which go > /dev/null; then
+  machine="$(go version | cut -f2 -d/)"
 else
   machine="$(uname -m)"
 fi
@@ -19,7 +19,7 @@ if [ "$machine" == "x86_64" ] || [ "$machine" == "amd64" ]; then
 elif [ "$machine" == "armv7l" ] || [ "$machine" == "armv6l" ] || [ "$machine" == "arm" ]; then
     ARCH=arm
 elif [ "$machine" == "arm64" ] || [ "$machine" == "aarch64" ]; then
-    ARCH=arm
+    ARCH=arm64
 else
     echo "Machine architecture $machine is not supported for a test environment"
     exit 1
