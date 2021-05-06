@@ -1,43 +1,4 @@
 #!/usr/bin/env bash
-d=$( cd "$( dirname "$0" )"; cd ..; pwd -P )
-
-: 'Check if shell scripts are healthy' && {
-  command -v shellcheck > /dev/null 2>&1 && {
-    shellcheck -e SC2164 "$d/scripts/"*.sh
-    shellcheck -e SC2164 "$d/test/"*.sh
-  }
-}
-
-goversion=1.15
-docker pull "golang:$goversion"
-gopath=${GOPATH:-$HOME/go}
-gopath=${gopath%%:*}
-
-run_command_on_docker_container() {
-  dir=$1
-  cmd=$2
-  #echo $cmd
-  if [ -z "$WERCKER" ]; then
-    docker run -i --rm \
-      --user "$(id -u):$(id -g)" \
-      -v "$d":/go/src/github.com/soracom/soracom-cli \
-      -v "$gopath":/go \
-      -v "$d/.cache":/.cache \
-      -w "/go/src/github.com/soracom/soracom-cli/$dir" \
-      "golang:$goversion" bash -x -c "$cmd" || {
-      echo -e "${RED}Build failed.${RESET}"
-      exit 1
-    }
-  else
-    # on wercker, it's already running on a docker container
-    set -x
-    cd "/go/src/github.com/soracom/soracom-cli/$dir" && GO111MODULE=on bash -c "$cmd"
-    set +x
-  fi
-}
-
-set -e # aborting if any commands below exit with non-zero code
-
 VERSION=$1
 if [ -z "$1" ]; then
   VERSION='0.0.0'
@@ -53,13 +14,44 @@ if [ -z "$2" ]; then
     fi
 fi
 
+set -Eeuo pipefail
+
+d=$( cd "$( dirname "$0" )" && cd .. && pwd -P )
+
+: 'Check if shell scripts are healthy' && {
+  command -v shellcheck > /dev/null 2>&1 && {
+    shellcheck -e SC2164 "$d/scripts/"*.sh
+    shellcheck -e SC2164 "$d/test/"*.sh
+  }
+}
+
+goversion=1.16
+docker pull "golang:$goversion"
+gopath=${GOPATH:-$HOME/go}
+gopath=${gopath%%:*}
+
+run_command_on_docker_container() {
+  dir=$1
+  cmd=$2
+  #echo $cmd
+  docker run -i --rm \
+    --user "$(id -u):$(id -g)" \
+    -v "$d":/go/src/github.com/soracom/soracom-cli \
+    -v "$gopath":/go \
+    -v "$d/.cache":/.cache \
+    -w "/go/src/github.com/soracom/soracom-cli/$dir" \
+    "golang:$goversion" bash -x -c "$cmd" || {
+    echo -e "${RED}Build failed.${RESET}"
+    exit 1
+  }
+}
+
 : 'Install dependencies' && {
     echo 'Installing build dependencies ...'
     run_command_on_docker_container '' 'go get -u golang.org/x/tools/cmd/goimports'
     run_command_on_docker_container '' 'go get -u github.com/laher/goxc'
 
     echo 'Installing commands used with "go generate" ...'
-    run_command_on_docker_container '' 'go get -u github.com/jessevdk/go-assets-builder'
     run_command_on_docker_container '' 'go get -u github.com/elazarl/goproxy'
     run_command_on_docker_container '' 'go mod tidy'
 }
@@ -80,6 +72,9 @@ fi
 
     echo 'Generating source codes for soracom-cli by using the generator ...'
     run_command_on_docker_container '' 'generators/cmd/src/generate-cmd -a generators/assets/soracom-api.en.yaml -s generators/assets/sandbox/soracom-sandbox-api.en.yaml -t generators/cmd/templates -p generators/cmd/predefined -o soracom/generated/cmd/'
+
+    echo 'Copying assets to embed ...'
+    run_command_on_docker_container '' 'cp -r generators/assets/ soracom/generated/cmd/assets/'
 }
 
 : 'Build soracom-cli executables' && {
